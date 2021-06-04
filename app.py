@@ -5,22 +5,24 @@ import jwt
 from datetime import datetime, timedelta
 from functools import wraps
 
+
 def token_obrigatorio(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        #verificar se foi enviado
-        if 'x-acess-token' in request.headers:
-            token = request.headers['x-acess-token']
+        # Verificar se um token foi enviado
+        if 'x-access-token' in request.headers:
+            token = request.headers['x-access-token']
         if not token:
-            return jsonify({'Mensagem': 'Token não foi incúido'}, 401)
-        #validar token
+            return jsonify({'mensagem': 'Token não foi incluído!'}, 401)
+        # Se temos um token, validar acesso consultando o BD
         try:
-            resultado = jwt.decode(token,app.config['SECRET_KEY'])
-            autor = Autor.query.filter_by(id_autor = resultado['id_autor']).first()
+            resultado = jwt.decode(token, app.config['SECRET_KEY'])
+            autor = Autor.query.filter_by(
+                id_autor=resultado['id_autor']).first()
         except:
-            return jsonify({'Mensagem': 'Token inválido'},401)
-        return f(autor,*args,**kwargs)
+            return jsonify({'mensagem': 'Token é inválido'}, 401)
+        return f(autor, *args, **kwargs)
     return decorated
 
     
@@ -35,7 +37,7 @@ def login():
     if auth.password == usuario.senha:
         token = jwt.encode({'id_autor':usuario.id_autor, 'exp':datetime.utcnow() 
         + timedelta(minutes = 30)}, app.config['SECRET_KEY'])
-        return jsonify({'token':token})
+        return jsonify({'token':token.decode('UTF-8')})
 
     return make_response('Login inválido', 401,{'WWW-Authenticate':'Basic realm ="Login obrigatório"'})
 
